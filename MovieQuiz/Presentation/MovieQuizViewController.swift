@@ -65,7 +65,8 @@ final class MovieQuizViewController: UIViewController {
 			imageView.layer.borderColor = UIColor.ypRed.cgColor
 			imageView.layer.borderWidth = 8
 		}
-		DispatchQueue.main.asyncAfter(deadline: .now() + 1.0){
+		DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+			guard let self = self else { return }
 			self.showNextQuestionOrResults()
 			self.toggleButtons() // а здесь разблокируем
 		}
@@ -78,11 +79,12 @@ final class MovieQuizViewController: UIViewController {
 			let alert = UIAlertController(title: "Раунд окончен!",
 										  message: "",
 										  preferredStyle: .alert)
-			let action = UIAlertAction(title: "Сыграть ещё раз", style: .default, handler: { _ in
+			let action = UIAlertAction(title: "Сыграть ещё раз", style: .default) { [weak self] _ in
+				guard let self = self else { return }
 				self.currentQuestionIndex = 0
 				self.showQuiz(quiz: self.convert(model: self.questions[self.currentQuestionIndex]))
 				self.correctAnswers = 0
-			})
+			}
 			alert.addAction(action)
 			self.present(alert, animated: true, completion: nil)
 		} else {
