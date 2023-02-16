@@ -124,7 +124,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 	}
 	
 	
-// MARK: - Actions
+	// MARK: - Actions
 	@IBAction private func noButtonClicked(_ sender: UIButton) {
 		toggleButtons() // тут блокируем кнопки
 		guard let currentQuestion = currentQuestion else {
