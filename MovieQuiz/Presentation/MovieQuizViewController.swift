@@ -12,6 +12,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 	private var questionFactory: QuestionFactoryProtocol?
 	private var currentQuestion: QuizQuestion?
 	private	var alertPresenter: AlertPresenter?
+	private var statService: StatisticServices?
 	
 	@IBOutlet private var imageView: UIImageView!
 	@IBOutlet private var textLabel: UILabel!
@@ -19,13 +20,13 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 	@IBOutlet private var noButton: UIButton! // тут оутлеты
 	@IBOutlet private var yesButton: UIButton! // на две кнопки
 	
-// MARK: - Lifecycle
+	// MARK: - Lifecycle
 	override func viewDidLoad() {
 		super.viewDidLoad()
+		statService = StatisticServicesImplementation()
 		questionFactory = QuestionFactory(delegate: self)
 		questionFactory?.requestNextQuestion()
 		alertPresenter = AlertPresenter(delegate: self, vc: self)
-		
 		imageView.layer.masksToBounds = true
 		imageView.layer.cornerRadius = 20
 	}
@@ -91,25 +92,37 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 	private func showNextQuestionOrResults() {
 		self.imageView.layer.borderWidth = 0
 		if currentQuestionIndex >= questionsAmount {
-			// создаём объекты всплывающего окна
-			let alertViewModel: QuizResultsViewModel = QuizResultsViewModel(title: "Раунд окончен!", text: "", buttonText: "Сыграть ещё раз")
-			alertPresenter?.showAlert(model: alertViewModel)
-			
-//			let alert = UIAlertController(title: "Раунд окончен!",
-//										  message: "",
-//										  preferredStyle: .alert)
-//			let action = UIAlertAction(title: "Сыграть ещё раз", style: .default) { [weak self] _ in
-//				guard let self = self else { return }
-//				self.currentQuestionIndex = 0
-//				self.questionFactory?.requestNextQuestion()
-//				self.correctAnswers = 0
-//			}
-//			alert.addAction(action)
-//			self.present(alert, animated: true, completion: nil)
+			showRezult()
 		} else {
 			questionFactory?.requestNextQuestion()
 		}
 	}
+	
+	private func showRezult() {
+		// запускаем сохранение данных
+		
+		statService?.store(correct: correctAnswers, total: questionsAmount)
+		
+		// создаём объекты всплывающего окна
+		if let statService = statService {
+			let date = statService.bestGame.date
+			
+			let alertViewModel: QuizResultsViewModel = QuizResultsViewModel (
+				title: "Раунд окончен!",
+				text: "Ваш результат: \(correctAnswers)/\(questionsAmount) \nколичество сыгранных квизов: \(statService.gamesCount)\nРекорд: \(statService.bestGame.correct)/\(statService.bestGame.total) (\(date.dateTimeString))\nСредняя точность: \(String(format: "%.2f", statService.totalAccurancy*100))%",
+				buttonText: "Сыграть ещё раз"
+			)
+			alertPresenter?.showAlert(model: alertViewModel)
+		} else {
+			let alertViewModel: QuizResultsViewModel = QuizResultsViewModel (
+				title: "Раунд окончен!",
+				text: "Ваш результат: \(correctAnswers)/\(questionsAmount)",
+				buttonText: "Сыграть ещё раз"
+			)
+			alertPresenter?.showAlert(model: alertViewModel)
+		}
+	}
+	
 	
 // MARK: - Actions
 	@IBAction private func noButtonClicked(_ sender: UIButton) {
