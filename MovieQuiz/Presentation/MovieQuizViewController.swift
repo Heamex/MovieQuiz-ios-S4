@@ -12,7 +12,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 	private var questionFactory: QuestionFactoryProtocol?
 	private var currentQuestion: QuizQuestion?
 	private	var alertPresenter: AlertPresenter?
-	private var statService: StatisticServices?
+	private var statisticService: StatisticServices?
 	
 	@IBOutlet private var imageView: UIImageView!
 	@IBOutlet private var textLabel: UILabel!
@@ -23,7 +23,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 	// MARK: - Lifecycle
 	override func viewDidLoad() {
 		super.viewDidLoad()
-		statService = StatisticServicesImplementation()
+		statisticService = StatisticServicesImplementation()
 		questionFactory = QuestionFactory(delegate: self)
 		questionFactory?.requestNextQuestion()
 		alertPresenter = AlertPresenter(delegate: self, vc: self)
@@ -101,10 +101,10 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 	private func showRezult() {
 		// запускаем сохранение данных
 		
-		statService?.store(correct: correctAnswers, total: questionsAmount)
+		statisticService?.store(correct: correctAnswers, total: questionsAmount)
 		
 		// создаём объекты всплывающего окна
-		if let statService = statService {
+		if let statService = statisticService {
 			let date = statService.bestGame.date
 			
 			let alertViewModel: QuizResultsViewModel = QuizResultsViewModel (
