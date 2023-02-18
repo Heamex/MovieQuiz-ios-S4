@@ -124,7 +124,7 @@
                         <outlet property="counterLabel" destination="SVF-Yl-dJA" id="b1p-YV-Dl7"/>
                         <outlet property="imageView" destination="yk6-cQ-wEm" id="th0-QZ-78S"/>
                         <outlet property="noButton" destination="alC-rJ-lL4" id="WLA-53-f99"/>
-                        <outlet property="textLabel" destination="SVF-Yl-dJA" id="8lz-ft-2xR"/>
+                        <outlet property="textLabel" destination="Csd-v2-biZ" id="oHN-72-Pqt"/>
                         <outlet property="yesButton" destination="bqD-vA-HR6" id="4Oq-oJ-dML"/>
                     </connections>
                 </viewController>

@@ -4,7 +4,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 	
 	
 	
-// MARK: - Private functions
+	// MARK: - Private functions
 	private var currentQuestionIndex: Int = 0
 	private var correctAnswers: Int = 0
 	
@@ -56,13 +56,13 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 		noButton.isEnabled.toggle()
 		yesButton.isEnabled.toggle()
 	}
-
+	
 	/// функция конвертации вопроса в модель
 	private func convert(model: QuizQuestion) -> QuizStepViewModel {
 		return QuizStepViewModel(
 			image: UIImage(named: model.image) ?? UIImage(),
-   question: model.text,
-   questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
+			question: model.text,
+			questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
 	}
 	/// здесь мы заполняем нашу картинку, текст и счётчик данными
 	private func showQuiz(quiz step: QuizStepViewModel) {
