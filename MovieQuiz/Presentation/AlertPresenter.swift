@@ -7,13 +7,11 @@
 
 import UIKit
 
-class AlertPresenter {
-	weak var delegate: AlertPresenterDelegate?
-	weak var viewCotnroller: UIViewController?
+final class AlertPresenter {
+	private weak var delegate: AlertPresenterDelegate?
 	
-	init(delegate: AlertPresenterDelegate, vc: UIViewController) {
+	init(delegate: AlertPresenterDelegate) {
 		self.delegate = delegate
-		self.viewCotnroller = vc
 	}
 	
 	func showAlert(model:QuizResultsViewModel){
@@ -26,6 +24,6 @@ class AlertPresenter {
 			self.delegate?.didAlertButtonPressed()
 		}
 		alert.addAction(action)
-		viewCotnroller?.present(alert, animated: true, completion: nil)
+		delegate?.present(alert, animated: true, completion: nil)
 	}
 }

@@ -12,6 +12,5 @@ struct AlertModel {
 	let text: String
 	let buttonText: String
 	let completeon = {
-		
 	}
 }

@@ -5,8 +5,8 @@
 //  Created by Nikita Belov on 04.02.23.
 //
 
-import Foundation
+import UIKit
 
-protocol AlertPresenterDelegate: AnyObject{
+protocol AlertPresenterDelegate: UIViewController{
 	func didAlertButtonPressed()
 }

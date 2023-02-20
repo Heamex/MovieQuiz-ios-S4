@@ -26,7 +26,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 		statisticService = StatisticServicesImplementation()
 		questionFactory = QuestionFactory(delegate: self)
 		questionFactory?.requestNextQuestion()
-		alertPresenter = AlertPresenter(delegate: self, vc: self)
+		alertPresenter = AlertPresenter(delegate: self)
 		imageView.layer.masksToBounds = true
 		imageView.layer.cornerRadius = 20
 	}
