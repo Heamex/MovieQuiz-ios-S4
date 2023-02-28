@@ -19,6 +19,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 	@IBOutlet private var counterLabel: UILabel!
 	@IBOutlet private var noButton: UIButton! // тут оутлеты
 	@IBOutlet private var yesButton: UIButton! // на две кнопки
+	@IBOutlet private var activityIndicator: UIActivityIndicatorView!
 	
 	// MARK: - Lifecycle
 	override func viewDidLoad() {
@@ -49,6 +50,17 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 	
 	override var preferredStatusBarStyle: UIStatusBarStyle {
 		return .lightContent
+	}
+	
+	// Запускаем индикатор загрузки
+	private func showLoadingIndicator() {
+		activityIndicator.isHidden = false
+		activityIndicator.startAnimating()
+	}
+	
+	private func hideLoadingIndicator() {
+		activityIndicator.isHidden = true
+		activityIndicator.stopAnimating()
 	}
 	
 	/// Включение / выключение кнопок
@@ -98,6 +110,16 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 		}
 	}
 	
+	private func showNetworkError(message: String) {
+		hideLoadingIndicator() // скрываем индикатор загрузки
+		
+		let model = QuizResultsViewModel(title: "Ошибка",
+							  text: message,
+							   buttonText: "Попробовать ещё раз")
+
+		alertPresenter?.showAlert(model: model)
+	}
+	
 	private func showRezult() {
 		// запускаем сохранение данных
 		
@@ -107,7 +129,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 		if let statService = statisticService {
 			let date = statService.bestGame.date
 			
-			let alertViewModel: QuizResultsViewModel = QuizResultsViewModel (
+			let alertViewModel = QuizResultsViewModel (
 				title: "Раунд окончен!",
 				text: "Ваш результат: \(correctAnswers)/\(questionsAmount) \nколичество сыгранных квизов: \(statService.gamesCount)\nРекорд: \(statService.bestGame.correct)/\(statService.bestGame.total) (\(date.dateTimeString))\nСредняя точность: \(String(format: "%.2f", statService.totalAccurancy*100))%",
 				buttonText: "Сыграть ещё раз"

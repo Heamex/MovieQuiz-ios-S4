@@ -14,7 +14,7 @@ final class AlertPresenter {
 		self.delegate = delegate
 	}
 	
-	func showAlert(model:QuizResultsViewModel){
+	func showAlert(model:QuizResultsViewModel) {
 		
 		let alert = UIAlertController(title: model.title,
 									  message: model.text,
