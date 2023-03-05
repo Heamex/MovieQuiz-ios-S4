@@ -25,8 +25,9 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 	override func viewDidLoad() {
 		super.viewDidLoad()
 		statisticService = StatisticServicesImplementation()
-		questionFactory = QuestionFactory(delegate: self)
-		questionFactory?.requestNextQuestion()
+		questionFactory = QuestionFactory(moviesLoader: MovesLoader(), delegate: self)
+		showLoadingIndicator()
+		questionFactory?.loadData()
 		alertPresenter = AlertPresenter(delegate: self)
 		imageView.layer.masksToBounds = true
 		imageView.layer.cornerRadius = 20
@@ -41,6 +42,16 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 			self?.showQuiz(quiz: viewModel)
 		}
 	}
+	
+	func didLoadDataFromServer() {
+		activityIndicator.isHidden = true // скрываем индикатор загрузки
+		questionFactory?.requestNextQuestion()
+	}
+	
+	func didFailToLoadData(with error: Error) {
+		showNetworkError(message: error.localizedDescription) // возьмём в качестве сообщения описание ошибки
+	}
+	
 	// MARK: - AlertPresenterDelegate
 	func didAlertButtonPressed() {
 		currentQuestionIndex = 0
@@ -72,7 +83,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 	/// функция конвертации вопроса в модель
 	private func convert(model: QuizQuestion) -> QuizStepViewModel {
 		return QuizStepViewModel(
-			image: UIImage(named: model.image) ?? UIImage(),
+			image: UIImage(data: model.image) ?? UIImage(),
 			question: model.text,
 			questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
 	}
@@ -114,9 +125,9 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 		hideLoadingIndicator() // скрываем индикатор загрузки
 		
 		let model = QuizResultsViewModel(title: "Ошибка",
-							  text: message,
-							   buttonText: "Попробовать ещё раз")
-
+										 text: message,
+										 buttonText: "Попробовать ещё раз")
+		
 		alertPresenter?.showAlert(model: model)
 	}
 	
