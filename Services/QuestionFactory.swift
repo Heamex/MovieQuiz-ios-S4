@@ -7,6 +7,25 @@
 
 import Foundation
 
+struct randomQuestion{
+	let question: String
+	let answer: Bool
+}
+
+enum QuestinFactoryError: String, Error {
+	case failureLoadImage
+}
+
+extension QuestinFactoryError: LocalizedError {
+	
+	var errorDescription: String? {
+		switch self {
+		case .failureLoadImage:
+			return NSLocalizedString("Ошибка загрузки картинки", comment: "RU")
+		}
+	}
+}
+
 final class QuestionFactory: QuestionFactoryProtocol {
 	private let moviesLoader: MoviesLoading
 	private weak var delegate: QuestionFactoryDelegate?
@@ -17,19 +36,6 @@ final class QuestionFactory: QuestionFactoryProtocol {
 		self.delegate = delegate
 	}
 	
-	/*
-	 private var questions: [QuizQuestion] = [
-	 QuizQuestion(image: "The Godfather", text: "Рейтинг этого фильма больше чем 6?", correctAnswer: true),
-	 QuizQuestion(image: "The Dark Knight", text: "Рейтинг этого фильма больше чем 6?", correctAnswer: true),
-	 QuizQuestion(image: "Kill Bill", text: "Рейтинг этого фильма больше чем 6?", correctAnswer: true),
-	 QuizQuestion(image: "The Avengers", text: "Рейтинг этого фильма больше чем 6?", correctAnswer: true),
-	 QuizQuestion(image: "Deadpool", text: "Рейтинг этого фильма больше чем 6?", correctAnswer: true),
-	 QuizQuestion(image: "The Green Knight", text: "Рейтинг этого фильма больше чем 6?", correctAnswer: true),
-	 QuizQuestion(image: "Old", text: "Рейтинг этого фильма больше чем 6?", correctAnswer: false),
-	 QuizQuestion(image: "The Ice Age Adventures of Buck Wild", text: "Рейтинг этого фильма больше чем 6?", correctAnswer: false),
-	 QuizQuestion(image: "Tesla", text: "Рейтинг этого фильма больше чем 6?", correctAnswer: false),
-	 QuizQuestion(image: "Vivarium", text: "Рейтинг этого фильма больше чем 6?", correctAnswer: false)]
-	 */
 	func loadData() {
 		moviesLoader.loadMovies { [weak self] result in
 			DispatchQueue.main.async {
@@ -57,13 +63,19 @@ final class QuestionFactory: QuestionFactoryProtocol {
 			do {
 				imageData = try Data(contentsOf: movie.resizedImageURL)
 			} catch {
-				print("Failed to load image")
+				DispatchQueue.main.async {
+					print("Failed to load image")
+					self.delegate?.didFailToLoadData(with: QuestinFactoryError.failureLoadImage)
+				}
 			}
 			
 			let rating = Float(movie.rating) ?? 0
 			
-			let text = "Рейтинг этого фильма больше чем 7?"
-			let correctAnswer = rating > 7
+			let generated = generateQuestionWith(raiting: rating)
+			var text = generated.question
+			var correctAnswer = generated.answer
+			
+			
 			
 			let question = QuizQuestion(image: imageData,
 										text: text,
@@ -77,3 +89,13 @@ final class QuestionFactory: QuestionFactoryProtocol {
 	}
 }
 
+private func generateQuestionWith(raiting:Float) -> randomQuestion {
+	
+	let answers = [
+		"Рейтинг этого фильма меньше 8?": raiting < 8,
+		"Рейтинг этого фильма больше 8?": raiting > 8,
+		"Рейтинг этого фильма меньше 9?": raiting < 9 ]
+	let r = answers.randomElement()!.key
+	
+	return randomQuestion(question: r, answer: answers[r]!)
+}

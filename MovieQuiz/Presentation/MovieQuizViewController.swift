@@ -44,7 +44,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 	}
 	
 	func didLoadDataFromServer() {
-		activityIndicator.isHidden = true // скрываем индикатор загрузки
+		hideLoadingIndicator()
 		questionFactory?.requestNextQuestion()
 	}
 	
@@ -55,7 +55,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 	// MARK: - AlertPresenterDelegate
 	func didAlertButtonPressed() {
 		currentQuestionIndex = 0
-		questionFactory?.requestNextQuestion()
+		questionFactory?.loadData()
 		correctAnswers = 0
 	}
 	
@@ -65,12 +65,10 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 	
 	// Запускаем индикатор загрузки
 	private func showLoadingIndicator() {
-		activityIndicator.isHidden = false
 		activityIndicator.startAnimating()
 	}
 	
 	private func hideLoadingIndicator() {
-		activityIndicator.isHidden = true
 		activityIndicator.stopAnimating()
 	}
 	
