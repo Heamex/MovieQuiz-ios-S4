@@ -110,6 +110,9 @@
                                     </stackView>
                                 </subviews>
                             </stackView>
+                            <activityIndicatorView hidden="YES" opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" hidesWhenStopped="YES" style="medium" translatesAutoresizingMaskIntoConstraints="NO" id="fIK-BK-rMp">
+                                <rect key="frame" x="186.66666666666666" y="428.66666666666669" width="20" height="20"/>
+                            </activityIndicatorView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" name="YP Black (iOS)"/>
@@ -118,9 +121,12 @@
                             <constraint firstItem="jMg-cj-MA1" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" constant="10" id="PMy-rJ-RCZ"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="jMg-cj-MA1" secondAttribute="trailing" constant="20" id="SuG-qF-4OE"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="jMg-cj-MA1" secondAttribute="bottom" id="qPI-yc-xNz"/>
+                            <constraint firstItem="fIK-BK-rMp" firstAttribute="centerY" secondItem="6Tk-OE-BBY" secondAttribute="centerY" id="rDL-ha-xrD"/>
+                            <constraint firstItem="fIK-BK-rMp" firstAttribute="centerX" secondItem="6Tk-OE-BBY" secondAttribute="centerX" id="tcP-n2-OOY"/>
                         </constraints>
                     </view>
                     <connections>
+                        <outlet property="activityIndicator" destination="fIK-BK-rMp" id="6Q9-MP-KtX"/>
                         <outlet property="counterLabel" destination="SVF-Yl-dJA" id="b1p-YV-Dl7"/>
                         <outlet property="imageView" destination="yk6-cQ-wEm" id="th0-QZ-78S"/>
                         <outlet property="noButton" destination="alC-rJ-lL4" id="WLA-53-f99"/>

@@ -19,13 +19,15 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 	@IBOutlet private var counterLabel: UILabel!
 	@IBOutlet private var noButton: UIButton! // тут оутлеты
 	@IBOutlet private var yesButton: UIButton! // на две кнопки
+	@IBOutlet private var activityIndicator: UIActivityIndicatorView!
 	
 	// MARK: - Lifecycle
 	override func viewDidLoad() {
 		super.viewDidLoad()
 		statisticService = StatisticServicesImplementation()
-		questionFactory = QuestionFactory(delegate: self)
-		questionFactory?.requestNextQuestion()
+		questionFactory = QuestionFactory(moviesLoader: MovesLoader(), delegate: self)
+		showLoadingIndicator()
+		questionFactory?.loadData()
 		alertPresenter = AlertPresenter(delegate: self)
 		imageView.layer.masksToBounds = true
 		imageView.layer.cornerRadius = 20
@@ -40,15 +42,34 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 			self?.showQuiz(quiz: viewModel)
 		}
 	}
+	
+	func didLoadDataFromServer() {
+		hideLoadingIndicator()
+		questionFactory?.requestNextQuestion()
+	}
+	
+	func didFailToLoadData(with error: Error) {
+		showNetworkError(message: error.localizedDescription) // возьмём в качестве сообщения описание ошибки
+	}
+	
 	// MARK: - AlertPresenterDelegate
 	func didAlertButtonPressed() {
 		currentQuestionIndex = 0
-		questionFactory?.requestNextQuestion()
+		questionFactory?.loadData()
 		correctAnswers = 0
 	}
 	
 	override var preferredStatusBarStyle: UIStatusBarStyle {
 		return .lightContent
+	}
+	
+	// Запускаем индикатор загрузки
+	private func showLoadingIndicator() {
+		activityIndicator.startAnimating()
+	}
+	
+	private func hideLoadingIndicator() {
+		activityIndicator.stopAnimating()
 	}
 	
 	/// Включение / выключение кнопок
@@ -60,7 +81,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 	/// функция конвертации вопроса в модель
 	private func convert(model: QuizQuestion) -> QuizStepViewModel {
 		return QuizStepViewModel(
-			image: UIImage(named: model.image) ?? UIImage(),
+			image: UIImage(data: model.image) ?? UIImage(),
 			question: model.text,
 			questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
 	}
@@ -98,6 +119,16 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 		}
 	}
 	
+	private func showNetworkError(message: String) {
+		hideLoadingIndicator() // скрываем индикатор загрузки
+		
+		let model = QuizResultsViewModel(title: "Ошибка",
+										 text: message,
+										 buttonText: "Попробовать ещё раз")
+		
+		alertPresenter?.showAlert(model: model)
+	}
+	
 	private func showRezult() {
 		// запускаем сохранение данных
 		
@@ -107,7 +138,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 		if let statService = statisticService {
 			let date = statService.bestGame.date
 			
-			let alertViewModel: QuizResultsViewModel = QuizResultsViewModel (
+			let alertViewModel = QuizResultsViewModel (
 				title: "Раунд окончен!",
 				text: "Ваш результат: \(correctAnswers)/\(questionsAmount) \nколичество сыгранных квизов: \(statService.gamesCount)\nРекорд: \(statService.bestGame.correct)/\(statService.bestGame.total) (\(date.dateTimeString))\nСредняя точность: \(String(format: "%.2f", statService.totalAccurancy*100))%",
 				buttonText: "Сыграть ещё раз"
