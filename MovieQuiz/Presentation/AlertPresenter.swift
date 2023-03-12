@@ -19,6 +19,7 @@ final class AlertPresenter {
 		let alert = UIAlertController(title: model.title,
 									  message: model.text,
 									  preferredStyle: .alert)
+		alert.view.accessibilityIdentifier = "Game results" //ДЛЯ ТЕСТОВ__
 		let action = UIAlertAction(title: model.buttonText, style: .default) { [weak self] _ in
 			guard let self = self else { return }
 			self.delegate?.didAlertButtonPressed()
