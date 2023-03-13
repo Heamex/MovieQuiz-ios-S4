@@ -5,14 +5,13 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 	
 	
 	// MARK: - Private functions
-	private var currentQuestionIndex: Int = 0
 	private var correctAnswers: Int = 0
 	
-	private let questionsAmount: Int = 10
 	private var questionFactory: QuestionFactoryProtocol?
 	private var currentQuestion: QuizQuestion?
 	private	var alertPresenter: AlertPresenter?
 	private var statisticService: StatisticServices?
+	private var presenter = MovieQuizPresenter()
 	
 	@IBOutlet private var imageView: UIImageView!
 	@IBOutlet private var textLabel: UILabel!
@@ -37,7 +36,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 	func didReceiveNextQuestion(question: QuizQuestion?) {
 		guard let question = question else { return }
 		currentQuestion = question
-		let viewModel = convert(model: question)
+		let viewModel = presenter.convert(model: question)
 		DispatchQueue.main.async { [weak self] in
 			self?.showQuiz(quiz: viewModel)
 		}
@@ -54,7 +53,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 	
 	// MARK: - AlertPresenterDelegate
 	func didAlertButtonPressed() {
-		currentQuestionIndex = 0
+		presenter.resetQuestionIndex()
 		questionFactory?.loadData()
 		correctAnswers = 0
 	}
@@ -78,22 +77,16 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 		yesButton.isEnabled.toggle()
 	}
 	
-	/// функция конвертации вопроса в модель
-	private func convert(model: QuizQuestion) -> QuizStepViewModel {
-		return QuizStepViewModel(
-			image: UIImage(data: model.image) ?? UIImage(),
-			question: model.text,
-			questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
-	}
+
 	/// здесь мы заполняем нашу картинку, текст и счётчик данными
 	private func showQuiz(quiz step: QuizStepViewModel) {
 		imageView.image = step.image
 		textLabel.text = step.question
-		counterLabel.text = "\(currentQuestionIndex+1)/\(questionsAmount)"
+		counterLabel.text = presenter.counterOfQuestions()
 	}
 	/// Функция, показывающая реакцию квиза на правильный / неправильный ответ
 	private func showAnswerResult(isCorrect: Bool) {
-		currentQuestionIndex += 1
+		presenter.switchToNextQuestion()
 		switch isCorrect {
 		case true:
 			correctAnswers += 1
@@ -112,7 +105,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 	/// Функция для перехода к следующему вопросу или результату квиза
 	private func showNextQuestionOrResults() {
 		self.imageView.layer.borderWidth = 0
-		if currentQuestionIndex >= questionsAmount {
+		if presenter.isLastQuestion() {
 			showRezult()
 		} else {
 			questionFactory?.requestNextQuestion()
@@ -132,7 +125,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 	private func showRezult() {
 		// запускаем сохранение данных
 		
-		statisticService?.store(correct: correctAnswers, total: questionsAmount)
+		statisticService?.store(correct: correctAnswers, total: presenter.questionsAmount)
 		
 		// создаём объекты всплывающего окна
 		if let statService = statisticService {
@@ -140,14 +133,14 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 			
 			let alertViewModel = QuizResultsViewModel (
 				title: "Раунд окончен!",
-				text: "Ваш результат: \(correctAnswers)/\(questionsAmount) \nколичество сыгранных квизов: \(statService.gamesCount)\nРекорд: \(statService.bestGame.correct)/\(statService.bestGame.total) (\(date.dateTimeString))\nСредняя точность: \(String(format: "%.2f", statService.totalAccurancy*100))%",
+				text: "Ваш результат: \(correctAnswers)/\(presenter.questionsAmount) \nколичество сыгранных квизов: \(statService.gamesCount)\nРекорд: \(statService.bestGame.correct)/\(statService.bestGame.total) (\(date.dateTimeString))\nСредняя точность: \(String(format: "%.2f", statService.totalAccurancy*100))%",
 				buttonText: "Сыграть ещё раз"
 			)
 			alertPresenter?.showAlert(model: alertViewModel)
 		} else {
 			let alertViewModel: QuizResultsViewModel = QuizResultsViewModel (
 				title: "Раунд окончен!",
-				text: "Ваш результат: \(correctAnswers)/\(questionsAmount)",
+				text: "Ваш результат: \(correctAnswers)/\(presenter.questionsAmount)",
 				buttonText: "Сыграть ещё раз"
 			)
 			alertPresenter?.showAlert(model: alertViewModel)
