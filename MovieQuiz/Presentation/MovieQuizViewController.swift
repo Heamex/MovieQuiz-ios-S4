@@ -1,15 +1,15 @@
 import UIKit
 
-final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, AlertPresenterDelegate {
+final class MovieQuizViewController: UIViewController, AlertPresenterDelegate {
 	
 	
 	
 	// MARK: - Private functions
-	private var correctAnswers: Int = 0
+	var correctAnswers: Int = 0
 	
-	private	var alertPresenter: AlertPresenter?
 	private var statisticService: StatisticServices?
 	private var presenter = MovieQuizPresenter()
+	var alertPresenter: AlertPresenter?
 	
 	@IBOutlet var imageView: UIImageView!
 	@IBOutlet private var textLabel: UILabel!
@@ -21,12 +21,14 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 	// MARK: - Lifecycle
 	override func viewDidLoad() {
 		super.viewDidLoad()
-		statisticService = StatisticServicesImplementation()
+		presenter.statisticService = StatisticServicesImplementation()
 		presenter.viewController = self
 		presenter.questionFactory = QuestionFactory(moviesLoader: MovesLoader(), delegate: presenter)
 		showLoadingIndicator()
 		presenter.questionFactory?.loadData()
 		alertPresenter = AlertPresenter(delegate: self)
+		presenter.alertPresenter = AlertPresenter(delegate: self)
+
 		imageView.layer.masksToBounds = true
 		imageView.layer.cornerRadius = 20
 	}
@@ -47,9 +49,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 	
 	// MARK: - AlertPresenterDelegate
 	func didAlertButtonPressed() {
-		presenter.resetQuestionIndex()
-		presenter.questionFactory?.loadData()
-		correctAnswers = 0
+		presenter.didAlertButtonPressed()
 	}
 	
 	override var preferredStatusBarStyle: UIStatusBarStyle {
