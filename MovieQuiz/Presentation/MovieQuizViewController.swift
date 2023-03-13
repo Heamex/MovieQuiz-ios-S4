@@ -24,6 +24,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 	override func viewDidLoad() {
 		super.viewDidLoad()
 		statisticService = StatisticServicesImplementation()
+		presenter.viewController = self
 		questionFactory = QuestionFactory(moviesLoader: MovesLoader(), delegate: self)
 		showLoadingIndicator()
 		questionFactory?.loadData()
@@ -72,7 +73,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 	}
 	
 	/// Включение / выключение кнопок
-	private func toggleButtons () {
+	func toggleButtons () {
 		noButton.isEnabled.toggle()
 		yesButton.isEnabled.toggle()
 	}
@@ -85,7 +86,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 		counterLabel.text = presenter.counterOfQuestions()
 	}
 	/// Функция, показывающая реакцию квиза на правильный / неправильный ответ
-	private func showAnswerResult(isCorrect: Bool) {
+	func showAnswerResult(isCorrect: Bool) {
 		presenter.switchToNextQuestion()
 		switch isCorrect {
 		case true:
@@ -150,19 +151,12 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 	
 	// MARK: - Actions
 	@IBAction private func noButtonClicked(_ sender: UIButton) {
-		toggleButtons() // тут блокируем кнопки
-		guard let currentQuestion = currentQuestion else {
-			return
-		}
-		let givenAnswer = false
-		showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
+		presenter.currentQuestion = currentQuestion
+		presenter.noButtonClicked()
 	}
+	
 	@IBAction private func yesButtonClicked(_ sender: UIButton) {
-		toggleButtons() // и здесь тоже блокируем
-		guard let currentQuestion = currentQuestion else {
-			return
-		}
-		let givenAnswer = true
-		showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
+		presenter.currentQuestion = currentQuestion
+		presenter.yesButtonClicked()
 	}
 }
