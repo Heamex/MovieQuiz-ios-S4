@@ -72,8 +72,8 @@ final class QuestionFactory: QuestionFactoryProtocol {
 			let rating = Float(movie.rating) ?? 0
 			
 			let generated = generateQuestionWith(raiting: rating)
-			var text = generated.question
-			var correctAnswer = generated.answer
+			let text = generated.question
+			let correctAnswer = generated.answer
 			
 			
 			
