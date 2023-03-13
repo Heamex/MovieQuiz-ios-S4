@@ -7,12 +7,22 @@
 
 import UIKit
 
-final class MovieQuizPresenter {
+final class MovieQuizPresenter: QuestionFactoryDelegate {
+	
+	func didLoadDataFromServer() {
+		viewController?.didLoadDataFromServer()
+	}
+	
+	func didFailToLoadData(with error: Error) {
+		viewController?.didLoadDataFromServer()
+	}
+	
 	
 	private var currentQuestionIndex: Int = 0
 	let questionsAmount: Int = 10
 	var currentQuestion: QuizQuestion?
 	weak var viewController: MovieQuizViewController?
+	var questionFactory: QuestionFactoryProtocol?
 
 	/// функция конвертации вопроса в модель
 	func convert(model: QuizQuestion) -> QuizStepViewModel {
@@ -40,20 +50,43 @@ final class MovieQuizPresenter {
 	
 	
 	func yesButtonClicked() {
-		viewController?.toggleButtons() // и здесь тоже блокируем
-		guard let currentQuestion = currentQuestion else {
-			return
-		}
-		let givenAnswer = true
-		viewController?.showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
+		didAnswer(isYes: true)
 	}
 	
 	func noButtonClicked() {
-		viewController?.toggleButtons() // и здесь тоже блокируем
+		didAnswer(isYes: false)
+	}
+	
+	func toggleButtons () {
+		viewController?.noButton.isEnabled.toggle()
+		viewController?.yesButton.isEnabled.toggle()
+	}
+	
+	private func didAnswer(isYes: Bool) {
+		toggleButtons() // и здесь тоже блокируем
 		guard let currentQuestion = currentQuestion else {
 			return
 		}
-		let givenAnswer = false
+		let givenAnswer = isYes
 		viewController?.showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
+	}
+	
+	// MARK: - QuestionFactoryDelegate
+	func didReceiveNextQuestion(question: QuizQuestion?) {
+		guard let question = question else { return }
+		currentQuestion = question
+		let viewModel = convert(model: question)
+		DispatchQueue.main.async { [weak viewController] in
+			viewController?.showQuiz(quiz: viewModel)
+		}
+	}
+	/// Функция для перехода к следующему вопросу или результату квиза
+	func showNextQuestionOrResults() {
+		viewController?.imageView.layer.borderWidth = 0
+		if isLastQuestion() {
+			viewController?.showRezult()
+		} else {
+			questionFactory?.requestNextQuestion()
+		}
 	}
 }
