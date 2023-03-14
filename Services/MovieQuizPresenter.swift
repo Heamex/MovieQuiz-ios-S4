@@ -23,14 +23,14 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
 	var statisticService: StatisticServices?
 	
 	// MARK: INIT
-
+	
 	init(viewController: MovieQuizViewControllerProtocol) {
 		self.viewController = viewController
-			
-			questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
-			statisticService = StatisticServicesImplementation()
-			questionFactory?.loadData()
-		}
+		
+		questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
+		statisticService = StatisticServicesImplementation()
+		questionFactory?.loadData()
+	}
 	
 	// MARK: - QuestionFactoryDelegate
 	
@@ -45,39 +45,39 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
 	}
 	
 	func didLoadDataFromServer() { // Данные получены
+		viewController?.hideLoadingIndicator()
 		questionFactory?.requestNextQuestion()
 	}
 	
 	func didFailToLoadData(with error: Error) { // данные не загрузились
+		viewController?.hideLoadingIndicator()
 		viewController?.showNetworkError(message: error.localizedDescription)
 	}
 	
 	// MARK: - Приватные методы
-
+	
 	private func isLastQuestion() -> Bool { // проверяем на последний вопрос
-		currentQuestionIndex == questionsAmount - 1
+		currentQuestionIndex == questionsAmount
 	}
 	
 	private func restartGame() { // перезапускаем игру
 		currentQuestionIndex = 0
 	}
 	
-	private func showQuizRezult() { // Показываем результаты квиза
-		// запускаем сохранение данных
-		statisticService?.store(correct: correctAnswers, total: questionsAmount)
+	private func showQuizRezult() { // Результат квиза
+		statisticService?.store(correct: correctAnswers, total: questionsAmount) // сохраняем статистику
 		
-		// создаём объекты всплывающего окна
-		if let statService = statisticService {
+		if let statService = statisticService { // создаём объекты всплывающего окна
 			let date = statService.bestGame.date
 			
-			let alertViewModel = QuizResultsViewModel (
-				title: "Раунд окончен!",
+			let alertViewModel = QuizResultsViewModel ( // формируем модель данных
+				title: "Этот раунд окончен!",
 				text: "Ваш результат: \(correctAnswers)/\(questionsAmount) \nколичество сыгранных квизов: \(statService.gamesCount)\nРекорд: \(statService.bestGame.correct)/\(statService.bestGame.total) (\(date.dateTimeString))\nСредняя точность: \(String(format: "%.2f", statService.totalAccurancy*100))%",
 				buttonText: "Сыграть ещё раз"
 			)
 			viewController?.showAlert(model: alertViewModel)
 		} else {
-			let alertViewModel: QuizResultsViewModel = QuizResultsViewModel (
+			let alertViewModel: QuizResultsViewModel = QuizResultsViewModel ( // формируем модель данных если загрузить статистику не удалось
 				title: "Раунд окончен!",
 				text: "Ваш результат: \(correctAnswers)/\(questionsAmount)",
 				buttonText: "Сыграть ещё раз"
@@ -86,10 +86,10 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
 		}
 	}
 	
-	// MARK: - Неприватные методы
+	// MARK: - Публичные методы
 	
 	// Переход к следующему вопросу или результату квиза
-	func showNextQuestionOrResults() {		
+	func showNextQuestionOrResults() {
 		if isLastQuestion() {
 			showQuizRezult()
 		} else {
@@ -104,10 +104,6 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
 			questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
 	}
 	
-	func switchToNextQuestion () { // прибавляем 1 к индексу
-		currentQuestionIndex += 1
-	}
-	
 	func didAnswer(isYes: Bool) { // когда пользователь ответил
 		viewController?.toggleButtons() // здесь блокируем кнопки
 		guard let currentQuestion = currentQuestion else {
@@ -118,13 +114,16 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
 	}
 	
 	func didAlertButtonPressed() { // когда пользователь нажимает "Ещё раз!"
-		restartGame()
 		questionFactory?.loadData()
 		restartGame()
 	}
 	
 	func counterOfQuestions() -> String { // текстовое значение счётчика вопросов для полей VC
 		"\(currentQuestionIndex + 1)/\(questionsAmount)"
+	}
+	
+	func switchToNextQuestion () { // прибавляем 1 к индексу
+		currentQuestionIndex += 1
 	}
 	
 	func yesButtonClicked() { // нажали кнопку Да

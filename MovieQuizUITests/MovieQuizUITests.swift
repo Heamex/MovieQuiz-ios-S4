@@ -7,7 +7,7 @@
 
 import XCTest
 
-class MovieQuizUITests: XCTestCase {
+final class MovieQuizUITests: XCTestCase {
 	// swiftlint:disable:next implicitly_unwrapped_optional
 	var app: XCUIApplication!
 	
@@ -55,20 +55,53 @@ class MovieQuizUITests: XCTestCase {
 	
 	func testTextLabel() {
 		app.buttons["Yes"].tap()
-		sleep(1)
+		sleep(2)
 		let indexLabel = app.staticTexts["Index"]
 		XCTAssertEqual(indexLabel.label, "2/10")
 	}
-
+	
 	func testGameFinish() {
+		sleep(1)
 		for _ in 1...10 {
 			app.buttons["No"].tap()
-					sleep(1)
+			sleep(2)
 		}
-		sleep(1)
-		let alert = app.alerts["Game results"]
-		XCTAssertEqual(alert.label, "Раунд окончен!")
-		XCTAssertEqual(alert.buttons.firstMatch.label, "Сыграть ещё раз")
+		
+		let alert = app.alerts["GameResults"]
+		
 		XCTAssertTrue(alert.exists)
+		XCTAssertTrue(alert.label == "Этот раунд окончен!")
+		XCTAssertTrue(alert.buttons.firstMatch.label == "Сыграть ещё раз")
+	}
+	
+	func testCorrectQestionsCount() {
+		sleep(2)
+		for _ in 1...10 {
+			app.buttons["No"].tap()
+			sleep(2)
+		}
+		
+		sleep(1)
+		let indexLabel = app.staticTexts["Index"]
+		
+		XCTAssertEqual(indexLabel.label, "10/10")
+	}
+	
+	func testAlertDismiss() {
+		sleep(2)
+		for _ in 1...10 {
+			app.buttons["No"].tap()
+			sleep(2)
+		}
+		
+		let alert = app.alerts["GameResults"]
+		alert.buttons.firstMatch.tap()
+		
+		sleep(2)
+		
+		let indexLabel = app.staticTexts["Index"]
+		
+		XCTAssertFalse(alert.exists)
+		XCTAssertTrue(indexLabel.label == "1/10")
 	}
 }

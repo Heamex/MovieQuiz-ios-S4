@@ -1,21 +1,22 @@
 import UIKit
 
-final class MovieQuizViewController: UIViewController, AlertPresenterDelegate, MovieQuizViewControllerProtocol {
+final class MovieQuizViewController: UIViewController, MovieQuizViewControllerProtocol {
 	
 	// MARK: - Приватные поля
-	
 	// предварительная настройка статусбара
 	override var preferredStatusBarStyle: UIStatusBarStyle { .lightContent }
 	@IBOutlet private var activityIndicator: UIActivityIndicatorView!
 	private var presenter: MovieQuizPresenter?
-		
+	
+	// MARK: - Публичные поля
+	
 	@IBOutlet var imageView: UIImageView!
 	@IBOutlet var textLabel: UILabel!
 	@IBOutlet var counterLabel: UILabel!
 	@IBOutlet var noButton: UIButton! // тут оутлеты
 	@IBOutlet var yesButton: UIButton! // на две кнопки
 	
-	// MARK: - Запуск
+	// MARK: - При запуске приложения:
 	
 	override func viewDidLoad() {
 		super.viewDidLoad()
@@ -27,23 +28,18 @@ final class MovieQuizViewController: UIViewController, AlertPresenterDelegate, M
 		imageView.layer.cornerRadius = 20
 	}
 	
-	// MARK: - AlertPresenterDelegate
-	
-	func didAlertButtonPressed() {
-		presenter?.didAlertButtonPressed()
-	}
-	// из презентера
+	// Показ алерта
 	func showAlert(model:QuizResultsViewModel) {
 		
 		let alert = UIAlertController(title: model.title,
 									  message: model.text,
 									  preferredStyle: .alert)
-		alert.view.accessibilityIdentifier = "Game results" //ДЛЯ ТЕСТОВ__
 		let action = UIAlertAction(title: model.buttonText, style: .default) { [weak self] _ in
 			guard let self = self else { return }
-			self.didAlertButtonPressed()
+			self.presenter?.didAlertButtonPressed()
 		}
 		alert.addAction(action)
+		alert.view.accessibilityIdentifier = "GameResults" //ДЛЯ ТЕСТОВ__
 		present(alert, animated: true, completion: nil)
 	}
 	
@@ -96,8 +92,6 @@ final class MovieQuizViewController: UIViewController, AlertPresenterDelegate, M
 		}
 	}
 	
-//	hideLoadingIndicator()
-	
 	// MARK: - Actions
 	@IBAction private func noButtonClicked(_ sender: UIButton) {
 		presenter?.noButtonClicked()
@@ -107,5 +101,3 @@ final class MovieQuizViewController: UIViewController, AlertPresenterDelegate, M
 		presenter?.yesButtonClicked()
 	}
 }
-
-// .hideLoadingIndicator()

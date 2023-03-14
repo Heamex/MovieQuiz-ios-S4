@@ -12,11 +12,11 @@ struct randomQuestion{
 	let answer: Bool
 }
 
-enum QuestinFactoryError: String, Error {
+enum QuestionFactoryError: String, Error {
 	case failureLoadImage
 }
 
-extension QuestinFactoryError: LocalizedError {
+extension QuestionFactoryError: LocalizedError {
 	
 	var errorDescription: String? {
 		switch self {
@@ -65,7 +65,7 @@ final class QuestionFactory: QuestionFactoryProtocol {
 			} catch {
 				DispatchQueue.main.async {
 					print("Failed to load image")
-					self.delegate?.didFailToLoadData(with: QuestinFactoryError.failureLoadImage)
+					self.delegate?.didFailToLoadData(with: QuestionFactoryError.failureLoadImage)
 				}
 			}
 			
