@@ -7,9 +7,13 @@
 
 import UIKit
 
-protocol MovieQuizViewControllerProtocol: AnyObject, UIViewController {
-	func didAlertButtonPressed()
-	func toggleButtons ()
+protocol MovieQuizViewControllerProtocol: AnyObject {
+	
 	func showQuiz(quiz step: QuizStepViewModel)
 	func showNetworkError(message: String)
+	func highlightImageBorder(isCorrect: Bool)
+	func showAlert(model:QuizResultsViewModel)
+	func didAlertButtonPressed()
+	func toggleButtons ()
+	
 }

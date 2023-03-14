@@ -7,10 +7,8 @@ final class MovieQuizViewController: UIViewController, AlertPresenterDelegate, M
 	// предварительная настройка статусбара
 	override var preferredStatusBarStyle: UIStatusBarStyle { .lightContent }
 	@IBOutlet private var activityIndicator: UIActivityIndicatorView!
-	private var presenter = MovieQuizPresenter()
-	
-	var alertPresenter: AlertPresenter?
-	
+	private var presenter: MovieQuizPresenter?
+		
 	@IBOutlet var imageView: UIImageView!
 	@IBOutlet var textLabel: UILabel!
 	@IBOutlet var counterLabel: UILabel!
@@ -21,12 +19,7 @@ final class MovieQuizViewController: UIViewController, AlertPresenterDelegate, M
 	
 	override func viewDidLoad() {
 		super.viewDidLoad()
-		alertPresenter = AlertPresenter(delegate: self)
-		
-		presenter.statisticService = StatisticServicesImplementation()
-		presenter.viewController = self 
-		presenter.questionFactory = QuestionFactory(moviesLoader: MovesLoader(), delegate: presenter)
-		presenter.questionFactory?.loadData()
+		presenter = MovieQuizPresenter(viewController: self)
 		
 		showLoadingIndicator()
 		toggleButtons()
@@ -37,7 +30,21 @@ final class MovieQuizViewController: UIViewController, AlertPresenterDelegate, M
 	// MARK: - AlertPresenterDelegate
 	
 	func didAlertButtonPressed() {
-		presenter.didAlertButtonPressed()
+		presenter?.didAlertButtonPressed()
+	}
+	// из презентера
+	func showAlert(model:QuizResultsViewModel) {
+		
+		let alert = UIAlertController(title: model.title,
+									  message: model.text,
+									  preferredStyle: .alert)
+		alert.view.accessibilityIdentifier = "Game results" //ДЛЯ ТЕСТОВ__
+		let action = UIAlertAction(title: model.buttonText, style: .default) { [weak self] _ in
+			guard let self = self else { return }
+			self.didAlertButtonPressed()
+		}
+		alert.addAction(action)
+		present(alert, animated: true, completion: nil)
 	}
 	
 	// Запускаем индикатор загрузки
@@ -58,7 +65,7 @@ final class MovieQuizViewController: UIViewController, AlertPresenterDelegate, M
 	func showQuiz(quiz step: QuizStepViewModel) { 	// здесь мы заполняем view модель данными
 		imageView.image = step.image
 		textLabel.text = step.question
-		counterLabel.text = presenter.counterOfQuestions()
+		counterLabel.text = presenter?.counterOfQuestions()
 	}
 	
 	// Показываем сетевую ошибку
@@ -68,15 +75,37 @@ final class MovieQuizViewController: UIViewController, AlertPresenterDelegate, M
 		let model = QuizResultsViewModel(title: "Ошибка",
 										 text: message,
 										 buttonText: "Попробовать ещё раз")
-		alertPresenter?.showAlert(model: model)
+		showAlert(model: model)
 	}
+	
+	func highlightImageBorder(isCorrect: Bool) { // Показываем результат ответа пользователю
+		presenter?.switchToNextQuestion()
+		switch isCorrect {
+		case true:
+			presenter?.correctAnswers += 1
+			imageView.layer.borderColor = UIColor.ypGreen.cgColor
+			imageView.layer.borderWidth = 8
+		case false:
+			imageView.layer.borderColor = UIColor.ypRed.cgColor
+			imageView.layer.borderWidth = 8
+		}
+		DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak presenter] in
+			guard let presenter = presenter else { return }
+			self.imageView.layer.borderWidth = 0
+			presenter.showNextQuestionOrResults()
+		}
+	}
+	
+//	hideLoadingIndicator()
 	
 	// MARK: - Actions
 	@IBAction private func noButtonClicked(_ sender: UIButton) {
-		presenter.noButtonClicked()
+		presenter?.noButtonClicked()
 	}
 	
 	@IBAction private func yesButtonClicked(_ sender: UIButton) {
-		presenter.yesButtonClicked()
+		presenter?.yesButtonClicked()
 	}
 }
+
+// .hideLoadingIndicator()
