@@ -1,175 +1,106 @@
 import UIKit
 
-final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, AlertPresenterDelegate {
+final class MovieQuizViewController: UIViewController {
 	
+	// MARK: - Приватные поля
+	// предварительная настройка статусбара
+	override var preferredStatusBarStyle: UIStatusBarStyle { .lightContent }
+	@IBOutlet private var activityIndicator: UIActivityIndicatorView!
+	private var presenter: MovieQuizPresenter?
 	
+	// MARK: - Публичные поля
 	
-	// MARK: - Private functions
-	private var currentQuestionIndex: Int = 0
-	private var correctAnswers: Int = 0
-	
-	private let questionsAmount: Int = 10
-	private var questionFactory: QuestionFactoryProtocol?
-	private var currentQuestion: QuizQuestion?
-	private	var alertPresenter: AlertPresenter?
-	private var statisticService: StatisticServices?
-	
-	@IBOutlet private var imageView: UIImageView!
-	@IBOutlet private var textLabel: UILabel!
-	@IBOutlet private var counterLabel: UILabel!
+	@IBOutlet private  var imageView: UIImageView! // картинка
+	@IBOutlet private var textLabel: UILabel! // лейбл вопроса
+	@IBOutlet private var counterLabel: UILabel! // лейбл счётчика
 	@IBOutlet private var noButton: UIButton! // тут оутлеты
 	@IBOutlet private var yesButton: UIButton! // на две кнопки
-	@IBOutlet private var activityIndicator: UIActivityIndicatorView!
 	
-	// MARK: - Lifecycle
+	// MARK: - При запуске приложения:
+	
 	override func viewDidLoad() {
 		super.viewDidLoad()
-		statisticService = StatisticServicesImplementation()
-		questionFactory = QuestionFactory(moviesLoader: MovesLoader(), delegate: self)
+		presenter = MovieQuizPresenter(viewController: self)
+		
 		showLoadingIndicator()
-		questionFactory?.loadData()
-		alertPresenter = AlertPresenter(delegate: self)
+		toggleButtons()
 		imageView.layer.masksToBounds = true
 		imageView.layer.cornerRadius = 20
 	}
 	
-	// MARK: - QuestionFactoryDelegate
-	func didReceiveNextQuestion(question: QuizQuestion?) {
-		guard let question = question else { return }
-		currentQuestion = question
-		let viewModel = convert(model: question)
-		DispatchQueue.main.async { [weak self] in
-			self?.showQuiz(quiz: viewModel)
-		}
+	// MARK: - Actions
+	@IBAction private func noButtonClicked(_ sender: UIButton) {
+		presenter?.noButtonClicked()
 	}
 	
-	func didLoadDataFromServer() {
-		hideLoadingIndicator()
-		questionFactory?.requestNextQuestion()
+	@IBAction private func yesButtonClicked(_ sender: UIButton) {
+		presenter?.yesButtonClicked()
 	}
-	
-	func didFailToLoadData(with error: Error) {
-		showNetworkError(message: error.localizedDescription) // возьмём в качестве сообщения описание ошибки
-	}
-	
-	// MARK: - AlertPresenterDelegate
-	func didAlertButtonPressed() {
-		currentQuestionIndex = 0
-		questionFactory?.loadData()
-		correctAnswers = 0
-	}
-	
-	override var preferredStatusBarStyle: UIStatusBarStyle {
-		return .lightContent
-	}
-	
+}
+
+extension MovieQuizViewController: MovieQuizViewControllerProtocol {
 	// Запускаем индикатор загрузки
-	private func showLoadingIndicator() {
+	func showLoadingIndicator() {
 		activityIndicator.startAnimating()
 	}
 	
-	private func hideLoadingIndicator() {
+	// Выключаем индикатор загрузки
+	func hideLoadingIndicator() {
 		activityIndicator.stopAnimating()
 	}
 	
-	/// Включение / выключение кнопок
-	private func toggleButtons () {
-		noButton.isEnabled.toggle()
-		yesButton.isEnabled.toggle()
-	}
-	
-	/// функция конвертации вопроса в модель
-	private func convert(model: QuizQuestion) -> QuizStepViewModel {
-		return QuizStepViewModel(
-			image: UIImage(data: model.image) ?? UIImage(),
-			question: model.text,
-			questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
-	}
-	/// здесь мы заполняем нашу картинку, текст и счётчик данными
-	private func showQuiz(quiz step: QuizStepViewModel) {
+	// Обновляем UI получив данные из модели
+	func showQuiz(quiz step: QuizStepViewModel) { 	// здесь мы заполняем view модель данными
 		imageView.image = step.image
 		textLabel.text = step.question
-		counterLabel.text = "\(currentQuestionIndex+1)/\(questionsAmount)"
+		counterLabel.text = presenter?.counterOfQuestions()
 	}
-	/// Функция, показывающая реакцию квиза на правильный / неправильный ответ
-	private func showAnswerResult(isCorrect: Bool) {
-		currentQuestionIndex += 1
+	
+	// Показываем сетевую ошибку
+	func showNetworkError(message: String) {
+		hideLoadingIndicator() // скрываем индикатор загрузки
+		
+		let model = QuizResultsViewModel(title: "Ошибка",
+										 text: message,
+										 buttonText: "Попробовать ещё раз")
+		showAlert(model: model)
+	}
+	
+	// Показываем результат ответа пользователя
+	func highlightImageBorder(isCorrect: Bool) {
+		presenter?.switchToNextQuestion()
 		switch isCorrect {
 		case true:
-			correctAnswers += 1
+			presenter?.correctAnswers += 1
 			imageView.layer.borderColor = UIColor.ypGreen.cgColor
 			imageView.layer.borderWidth = 8
 		case false:
 			imageView.layer.borderColor = UIColor.ypRed.cgColor
 			imageView.layer.borderWidth = 8
 		}
-		DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+		DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak presenter] in
+			guard let presenter = presenter else { return }
+			self.imageView.layer.borderWidth = 0
+			presenter.showNextQuestionOrResults()
+		}
+	}
+	
+	func showAlert(model:QuizResultsViewModel) { // Показ алерта
+		
+		let alert = UIAlertController(title: model.title,
+									  message: model.text,
+									  preferredStyle: .alert)
+		let action = UIAlertAction(title: model.buttonText, style: .default) { [weak self] _ in
 			guard let self = self else { return }
-			self.showNextQuestionOrResults()
-			self.toggleButtons() // а здесь разблокируем
+			self.presenter?.didAlertButtonPressed()
 		}
+		alert.addAction(action)
+		alert.view.accessibilityIdentifier = "GameResults" //ДЛЯ ТЕСТОВ__
+		present(alert, animated: true, completion: nil)
 	}
-	/// Функция для перехода к следующему вопросу или результату квиза
-	private func showNextQuestionOrResults() {
-		self.imageView.layer.borderWidth = 0
-		if currentQuestionIndex >= questionsAmount {
-			showRezult()
-		} else {
-			questionFactory?.requestNextQuestion()
-		}
-	}
-	
-	private func showNetworkError(message: String) {
-		hideLoadingIndicator() // скрываем индикатор загрузки
-		
-		let model = QuizResultsViewModel(title: "Ошибка",
-										 text: message,
-										 buttonText: "Попробовать ещё раз")
-		
-		alertPresenter?.showAlert(model: model)
-	}
-	
-	private func showRezult() {
-		// запускаем сохранение данных
-		
-		statisticService?.store(correct: correctAnswers, total: questionsAmount)
-		
-		// создаём объекты всплывающего окна
-		if let statService = statisticService {
-			let date = statService.bestGame.date
-			
-			let alertViewModel = QuizResultsViewModel (
-				title: "Раунд окончен!",
-				text: "Ваш результат: \(correctAnswers)/\(questionsAmount) \nколичество сыгранных квизов: \(statService.gamesCount)\nРекорд: \(statService.bestGame.correct)/\(statService.bestGame.total) (\(date.dateTimeString))\nСредняя точность: \(String(format: "%.2f", statService.totalAccurancy*100))%",
-				buttonText: "Сыграть ещё раз"
-			)
-			alertPresenter?.showAlert(model: alertViewModel)
-		} else {
-			let alertViewModel: QuizResultsViewModel = QuizResultsViewModel (
-				title: "Раунд окончен!",
-				text: "Ваш результат: \(correctAnswers)/\(questionsAmount)",
-				buttonText: "Сыграть ещё раз"
-			)
-			alertPresenter?.showAlert(model: alertViewModel)
-		}
-	}
-	
-	
-	// MARK: - Actions
-	@IBAction private func noButtonClicked(_ sender: UIButton) {
-		toggleButtons() // тут блокируем кнопки
-		guard let currentQuestion = currentQuestion else {
-			return
-		}
-		let givenAnswer = false
-		showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
-	}
-	@IBAction private func yesButtonClicked(_ sender: UIButton) {
-		toggleButtons() // и здесь тоже блокируем
-		guard let currentQuestion = currentQuestion else {
-			return
-		}
-		let givenAnswer = true
-		showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
+
+	func toggleButtons () { // выключатель кнопок
+		noButton.isEnabled.toggle()
+		yesButton.isEnabled.toggle()
 	}
 }

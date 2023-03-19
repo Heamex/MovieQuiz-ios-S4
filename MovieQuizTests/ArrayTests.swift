@@ -9,7 +9,7 @@ import Foundation
 import XCTest
 @testable import MovieQuiz
 
-class ArrayTests: XCTest {
+class ArrayTests: XCTestCase {
 	
 	func testGetValueInRange() throws {
 		//Given
