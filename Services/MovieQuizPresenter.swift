@@ -7,7 +7,7 @@
 
 import UIKit
 
-final class MovieQuizPresenter: QuestionFactoryDelegate {
+final class MovieQuizPresenter {
 	
 	// MARK: Приватные поля
 	
@@ -31,29 +31,6 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
 		statisticService = StatisticServicesImplementation()
 		questionFactory?.loadData()
 	}
-	
-	// MARK: - QuestionFactoryDelegate
-	
-	func didReceiveNextQuestion(question: QuizQuestion?) {
-		guard let question = question else { return }
-		currentQuestion = question
-		let viewModel = convert(model: question)
-		DispatchQueue.main.async { [weak viewController] in
-			viewController?.showQuiz(quiz: viewModel)
-			viewController?.toggleButtons()
-		}
-	}
-	
-	func didLoadDataFromServer() { // Данные получены
-		viewController?.hideLoadingIndicator()
-		questionFactory?.requestNextQuestion()
-	}
-	
-	func didFailToLoadData(with error: Error) { // данные не загрузились
-		viewController?.hideLoadingIndicator()
-		viewController?.showNetworkError(message: error.localizedDescription)
-	}
-	
 	// MARK: - Приватные методы
 	
 	private func isLastQuestion() -> Bool { // проверяем на последний вопрос
@@ -132,5 +109,30 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
 	
 	func noButtonClicked() { // нажали кнопку Нет
 		didAnswer(isYes: false)
+	}
+}
+
+	// MARK: - QuestionFactoryDelegate
+
+extension MovieQuizPresenter: QuestionFactoryDelegate {
+	
+	func didReceiveNextQuestion(question: QuizQuestion?) {
+		guard let question = question else { return }
+		currentQuestion = question
+		let viewModel = convert(model: question)
+		DispatchQueue.main.async { [weak viewController] in
+			viewController?.showQuiz(quiz: viewModel)
+			viewController?.toggleButtons()
+		}
+	}
+	
+	func didLoadDataFromServer() { // Данные получены
+		viewController?.hideLoadingIndicator()
+		questionFactory?.requestNextQuestion()
+	}
+	
+	func didFailToLoadData(with error: Error) { // данные не загрузились
+		viewController?.hideLoadingIndicator()
+		viewController?.showNetworkError(message: error.localizedDescription)
 	}
 }

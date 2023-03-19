@@ -1,6 +1,6 @@
 import UIKit
 
-final class MovieQuizViewController: UIViewController, MovieQuizViewControllerProtocol {
+final class MovieQuizViewController: UIViewController {
 	
 	// MARK: - Приватные поля
 	// предварительная настройка статусбара
@@ -10,11 +10,11 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
 	
 	// MARK: - Публичные поля
 	
-	@IBOutlet var imageView: UIImageView!
-	@IBOutlet var textLabel: UILabel!
-	@IBOutlet var counterLabel: UILabel!
-	@IBOutlet var noButton: UIButton! // тут оутлеты
-	@IBOutlet var yesButton: UIButton! // на две кнопки
+	@IBOutlet private  var imageView: UIImageView! // картинка
+	@IBOutlet private var textLabel: UILabel! // лейбл вопроса
+	@IBOutlet private var counterLabel: UILabel! // лейбл счётчика
+	@IBOutlet private var noButton: UIButton! // тут оутлеты
+	@IBOutlet private var yesButton: UIButton! // на две кнопки
 	
 	// MARK: - При запуске приложения:
 	
@@ -28,21 +28,17 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
 		imageView.layer.cornerRadius = 20
 	}
 	
-	// Показ алерта
-	func showAlert(model:QuizResultsViewModel) {
-		
-		let alert = UIAlertController(title: model.title,
-									  message: model.text,
-									  preferredStyle: .alert)
-		let action = UIAlertAction(title: model.buttonText, style: .default) { [weak self] _ in
-			guard let self = self else { return }
-			self.presenter?.didAlertButtonPressed()
-		}
-		alert.addAction(action)
-		alert.view.accessibilityIdentifier = "GameResults" //ДЛЯ ТЕСТОВ__
-		present(alert, animated: true, completion: nil)
+	// MARK: - Actions
+	@IBAction private func noButtonClicked(_ sender: UIButton) {
+		presenter?.noButtonClicked()
 	}
 	
+	@IBAction private func yesButtonClicked(_ sender: UIButton) {
+		presenter?.yesButtonClicked()
+	}
+}
+
+extension MovieQuizViewController: MovieQuizViewControllerProtocol {
 	// Запускаем индикатор загрузки
 	func showLoadingIndicator() {
 		activityIndicator.startAnimating()
@@ -53,11 +49,7 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
 		activityIndicator.stopAnimating()
 	}
 	
-	func toggleButtons () { // выключатель кнопок
-		noButton.isEnabled.toggle()
-		yesButton.isEnabled.toggle()
-	}
-	
+	// Обновляем UI получив данные из модели
 	func showQuiz(quiz step: QuizStepViewModel) { 	// здесь мы заполняем view модель данными
 		imageView.image = step.image
 		textLabel.text = step.question
@@ -74,7 +66,8 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
 		showAlert(model: model)
 	}
 	
-	func highlightImageBorder(isCorrect: Bool) { // Показываем результат ответа пользователю
+	// Показываем результат ответа пользователя
+	func highlightImageBorder(isCorrect: Bool) {
 		presenter?.switchToNextQuestion()
 		switch isCorrect {
 		case true:
@@ -92,12 +85,22 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
 		}
 	}
 	
-	// MARK: - Actions
-	@IBAction private func noButtonClicked(_ sender: UIButton) {
-		presenter?.noButtonClicked()
+	func showAlert(model:QuizResultsViewModel) { // Показ алерта
+		
+		let alert = UIAlertController(title: model.title,
+									  message: model.text,
+									  preferredStyle: .alert)
+		let action = UIAlertAction(title: model.buttonText, style: .default) { [weak self] _ in
+			guard let self = self else { return }
+			self.presenter?.didAlertButtonPressed()
+		}
+		alert.addAction(action)
+		alert.view.accessibilityIdentifier = "GameResults" //ДЛЯ ТЕСТОВ__
+		present(alert, animated: true, completion: nil)
 	}
-	
-	@IBAction private func yesButtonClicked(_ sender: UIButton) {
-		presenter?.yesButtonClicked()
+
+	func toggleButtons () { // выключатель кнопок
+		noButton.isEnabled.toggle()
+		yesButton.isEnabled.toggle()
 	}
 }
